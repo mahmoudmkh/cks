@@ -1,0 +1,30 @@
+kubectl create namespace baz
+----------------------------
+vim logging-sidecar.yml
+---------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logging-sidecar
+  namespace: baz
+spec:
+  containers:
+  - name: busybox1
+    image: busybox
+    command: ['sh', '-c', 'while true; do echo Logging data > /output/output.log; sleep 5; done']
+    volumeMounts:
+    - name: sharedvol
+      mountpath: /output
+  - name: sidecar
+    image: busybox
+    command: ['sh', '-c', 'tail -f /input/output.log']
+    volumeMounts:
+    - name: sharedvol
+      mountPath: /input
+  volumes:
+  - name: sharedvol
+    emptyDir: {}
+--------------------------------------------
+kubectl create -f logging-sidecar.yml
+--------------------------------------------
+kubectl logs logging-sidecar -n baz -c sidecar
